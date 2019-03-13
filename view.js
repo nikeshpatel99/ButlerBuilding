@@ -4,33 +4,50 @@ var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
 	"attribute vec4 a_Color;\n" +
 	"attribute vec4 a_Normal;\n" +
+	"attribute vec2 a_TexCoords;\n" +
 	"uniform mat4 u_ModelMatrix;\n" +
 	"uniform mat4 u_NormalMatrix;\n" +
 	"uniform mat4 u_ViewMatrix;\n" +
 	"uniform mat4 u_ProjMatrix;\n" +
-	"uniform vec3 u_LightColor;\n" +
-	"uniform vec3 u_LightDirection;\n" +
 	"varying vec4 v_Color;\n" +
-	"uniform bool u_isLighting;\n"+
+	"varying vec2 v_TexCoords;\n" +
+	"varying vec3 v_Normal;\n" +
+	"varying vec3 v_Position;\n" +
 	"void main() {\n" +
 	"	gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n" +
-	"	if(u_isLighting){\n" +
-	"		vec3 normal = normalize((u_NormalMatrix * a_Normal).xyz);\n" +
-	"		float nDotL = max(dot(normal, u_LightDirection), 0.0);\n" +
-	"		vec3 diffuse = u_LightColor * a_Color.rgb * nDotL;\n" +
-	"		v_Color = vec4(diffuse, a_Color.a);\n" +
-	"	}else{\n" +
-	"		v_Color = a_Color;\n" +
-	"	}\n"+
+	"	v_Position = vec3(u_ModelMatrix * a_Position);\n" +
+	"	v_Normal = normalize(vec3(u_NormalMatrix * a_Normal));\n "+
+	"	v_Color = a_Color;\n" +
+	"	v_TexCoords = a_TexCoords;\n" +
 	"}\n";
 
 var FSHADER_SOURCE=
 	"#ifdef GL_ES\n" +
 	"precision mediump float;\n" +
 	"#endif\n" +
+	"uniform sampler2D u_Sampler;\n" +
+	"uniform vec3 u_LightColor;\n" +
+	"uniform vec3 u_LightDirection;\n" +
+	"uniform bool u_isTextured;\n" +
+	"uniform bool u_isLighting;\n" +
+	"varying vec3 v_Normal;\n" +
+	"varying vec3 v_Position;\n" +
 	"varying vec4 v_Color;\n" +
+	"varying vec2 v_TexCoords;\n" +
 	"void main() {\n" +
-	"	gl_FragColor = v_Color;\n" +
+	"	vec3 normal = normalize(v_Normal);\n" +
+	"	float nDotL = max(dot(u_LightDirection, normal) , 0.0);\n" +
+	"	if(u_isLighting){\n" +
+	"		vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n" +
+	"		gl_FragColor = vec4(diffuse, v_Color.a);\n" +
+	"	}else{\n" +
+	"		gl_FragColor = v_Color;\n" +
+	"	}\n" +
+	"	if(u_isTextured){\n" +
+	"		vec4 texColor = texture2D(u_Sampler, v_TexCoords);\n" +
+	"		vec3 diffuse = u_LightColor * texColor.rgb * nDotL;\n" +
+	"		gl_FragColor = vec4(diffuse, texColor.a);\n" +
+	"	}\n" +
 	"}\n";
 
 var viewMatrix = new Matrix4();　// The view matrix
@@ -41,6 +58,56 @@ var g_normalMatrix = new Matrix4();  // Coordinate transformation matrix for nor
 var ANGLE_STEP = 3.0;  // The increments of rotation angle (degrees)
 var g_xAngle = 0.0;    // The rotation x angle (degrees)
 var g_yAngle = 0.0;    // The rotation y angle (degrees)
+
+//
+// Initialize a texture and load an image.
+// When the image finished loading copy it into the texture.
+//
+function loadTexture(gl, s) {
+	const texture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+
+	//image takes time to load - we use single pixel until its finished loading, then we slap the texture on the object
+	const internalFormat = gl.RGBA;
+	const width = 1;
+	const height = 1;
+	const border = 0;
+	const srcFormat = gl.RGBA;
+	const srcType = gl.UNSIGNED_BYTE;
+	const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+	gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+				width, height, border, srcFormat, srcType,
+				pixel);
+
+	const image = new Image();
+	image.onload = function() {
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+				  srcFormat, srcType, image);
+
+	// WebGL1 has different requirements for power of 2 images
+	// vs non power of 2 images so check if the image is a
+	// power of 2 in both dimensions.
+	if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+		// Yes, it's a power of 2. Generate mips.
+		gl.generateMipmap(gl.TEXTURE_2D);
+	} else {
+		// No, it's not a power of 2. Turn off mips and set
+		// wrapping to clamp to edge
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	}
+	};
+	image.src = s;
+
+	return texture;
+}
+
+function isPowerOf2(value) {
+	return (value & (value - 1)) == 0;
+}
+
 
 function main(){
 	var canvas = document.getElementById("webgl");
@@ -68,8 +135,8 @@ function main(){
 	var u_NormalMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
 	var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
 	var u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
-	
 	var u_isLighting = gl.getUniformLocation(gl.program, "u_isLighting");
+	var u_Sampler = gl.getUniformLocation(gl.program, "u_Sampler");
 	
 	if (!u_ModelMatrix || !u_ViewMatrix || !u_NormalMatrix || !u_ProjMatrix || !u_LightColor || !u_LightDirection || !u_isLighting) { 
 		console.log("Failed to get the storage location of one of the matrices in this wonderful program");
@@ -83,7 +150,6 @@ function main(){
 	var lightDirection = new Vector3([0.5, 3.0, 4.0]);
 	lightDirection.normalize(); // Normalize
 	gl.uniform3fv(u_LightDirection, lightDirection.elements);
-	
 	
 	// calculate the view matrix and projection matrix
 	viewMatrix.setLookAt(0, 0, 50, 0, 0, -100, 0, 1, 0);
