@@ -121,10 +121,19 @@ function keydown(ev, gl, u_ModelMatrix, u_NormalMatrix, u_isLighting) {
 	draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting);
 };
 
-function initVertexBuffers(gl) {
+function initVertexBuffers(gl,shape) {
 	//cube() returns [vertices,colors,normals,indices]
-	let data = cube();
-	console.log(data);
+	var data;
+	switch(shape)
+	{
+		case "cube":
+			data = cube();
+			break;
+		case "corner":
+			data = corner();
+			break;
+		default:return -1;//not a valid shape to render
+	}
 	var vertices = data[0];
 	var colors = data[1];
 	var normals = data[2];
@@ -258,11 +267,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting) {
 	gl.uniform1i(u_isLighting, true); // Will apply lighting
 
 	// Set the vertex coordinates and color (for the cube)
-	var n = initVertexBuffers(gl);
-	if (n < 0) {
-		console.log('Failed to set the vertex information');
-		return;
-	}
+	var n = reintVertexBuffers(gl,"cube");
 
 	// Rotate, and then translate
 	modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
@@ -275,15 +280,24 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting) {
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	
-	/*
-	// Model the chair back
+	n = reintVertexBuffers(gl,"corner");
+	// Model the building slanted roof
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(0, 1.25, -0.75);  // Translation
-	modelMatrix.scale(2.0, 2.0, 0.5); // Scale
+	modelMatrix.translate(0, 5.0, 0);  // Translation
+	modelMatrix.scale(20.0, 5.0, 20.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	*/
+	
 }
+
+function reintVertexBuffers(gl,shape){
+	var n = initVertexBuffers(gl,shape);
+	if (n < 0) {
+		console.log('Failed to set the vertex information');
+		return;
+	}
+	return n;
+};
 
 function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 	pushMatrix(modelMatrix);
@@ -301,37 +315,3 @@ function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 
 	modelMatrix = popMatrix();
 }
-/*
-function drawTriangle(gl){
-	let n = 3;
-	let vertices = new Float32Array([0,0,-1,-1,1,-1]);
-	
-	let vertexBuffer = gl.createBuffer();
-	if (!vertexBuffer) {
-		console.log("Failed to create the buffer object");
-		return -1;
-	}
-	
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
-	
-	var a_Position = gl.getAttribLocation(gl.program, "a_Position");
-	if(a_Position < 0) {
-		console.log("Failed to get the storage location of a_Position");
-		return -1;
-	}
-
-	gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-
-	gl.enableVertexAttribArray(a_Position);
-	
-	var a_Color = gl.getAttribLocation(gl.program,"a_Color");
-	if(a_Color < 0) {
-		console.log("Failed to get the storage location of a_Color");
-		return -1;
-	}
-	gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(a_Color);
-	return n;
-};
-*/
