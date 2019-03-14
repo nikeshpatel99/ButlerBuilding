@@ -1,10 +1,12 @@
 //Butler Building WebGL main program
 
 //textures
+var grassCombo;
 var grass;
 var wood;
 var yellowBrick;
 var brownBrick;
+var glassPane;
 
 var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
@@ -132,10 +134,12 @@ function main(){
 		return;
 	}
 	
-	grass = loadTexture(gl, "./img/grass-metal.png");
+	grassCombo = loadTexture(gl, "./img/grass-metal.png");
 	yellowBrick = loadTexture(gl, "./img/yellowBrick.jpg");
 	brownBrick = loadTexture(gl, "./img/brownBrick.jpg");
 	wood = loadTexture(gl, "./img/wood.jpg");
+	glassPane = loadTexture(gl, "./img/glassPane.jpg");
+	grass = loadTexture(gl, "./img/grass.png");
 	
 	//viewport settings
 	//gl.viewport(0, 0, canvas.width, canvas.height);
@@ -340,8 +344,22 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 
 	gl.uniform1i(u_isLighting, false); // Will not apply lighting
 
+	//bind textures to buffers
+	// 0 = yellowBrick, 1 = brownBrick, 2 = grassCombo, 3 = wood, 4 = glass
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
+	gl.activeTexture(gl.TEXTURE1);
+	gl.bindTexture(gl.TEXTURE_2D, brownBrick);
+	gl.activeTexture(gl.TEXTURE2);
+	gl.bindTexture(gl.TEXTURE_2D, grassCombo);
+	gl.activeTexture(gl.TEXTURE3);
+	gl.bindTexture(gl.TEXTURE_2D, wood);
+	gl.activeTexture(gl.TEXTURE4);
+	gl.bindTexture(gl.TEXTURE_2D, glassPane);
+	gl.activeTexture(gl.TEXTURE5);
+	gl.bindTexture(gl.TEXTURE_2D, grass);
+	
 	// Set the vertex coordinates and color (for the x, y axes)
-
 	var n = initAxesVertexBuffers(gl);
 	if (n < 0) {
 		console.log("Failed to set the vertex information");
@@ -365,6 +383,15 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
 	modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
 	modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
+	// ***FLOOR***
+	gl.activeTexture(gl.TEXTURE5);
+	gl.uniform1i(u_Sampler, 5);
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(0,-5.5,0);
+	modelMatrix.scale(80.0, 0.5, 80.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
 	
 	// ************* MAIN DRAWS *************
 	// ***TABLE***
@@ -377,12 +404,12 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler);
 	modelMatrix = popMatrix();
 	// ***TABLE***
+	
 	// *** MAIN BUILDING ***
 	// Model building base - split into 2 halves
 	//front base of building
 	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
 	gl.uniform1i(u_Sampler, 0);
 	// Model building base - split into 2 halves
 	pushMatrix(modelMatrix);
@@ -392,7 +419,6 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix = popMatrix();
 	//rear base of building
 	gl.activeTexture(gl.TEXTURE1);
-	gl.bindTexture(gl.TEXTURE_2D, brownBrick);
 	gl.uniform1i(u_Sampler, 1);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(10.0, 0, 0);  // Translation
@@ -402,7 +428,6 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	//main building roof
 	n = reintVertexBuffers(gl,"corner",u_isTextured);
 	gl.activeTexture(gl.TEXTURE2);
-	gl.bindTexture(gl.TEXTURE_2D, grass);
 	gl.uniform1i(u_Sampler, 2);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0, 10.0, 0);  // Translation
@@ -418,7 +443,6 @@ function drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler){
 	var n;
 	n = reintVertexBuffers(gl,"octagon",u_isTextured);
 	gl.activeTexture(gl.TEXTURE3);
-	gl.bindTexture(gl.TEXTURE_2D, wood);
 	gl.uniform1i(u_Sampler, 3);
 	pushMatrix(modelMatrix);
 	modelMatrix.scale(10.0, 1.0, 10.0); // Scale
