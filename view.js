@@ -164,8 +164,8 @@ function main(){
 	gl.uniform3fv(u_LightDirection, lightDirection.elements);
 	
 	// calculate the view matrix and projection matrix
-	viewMatrix.setLookAt(0, 0, 50, 0, 0, -100, 0, 1, 0);
-	projMatrix.setPerspective(50, canvas.width/canvas.height, 1, 100);
+	viewMatrix.setLookAt(0, 20, 70, 0, 0, -100, 0, 1, 0);
+	projMatrix.setPerspective(70, canvas.width/canvas.height, 1, 100);
 	// Pass the view and projection matrix to u_ViewMatrix, u_ProjMatrix
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
@@ -356,32 +356,78 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.uniform1i(u_isLighting, true); // Will apply lighting
 	gl.uniform1i(u_isTextured, false); // Will not apply textures until changed
 	
-
-	// Set the vertex coordinates and color (for the cube)
-	var n = reintVertexBuffers(gl,"octagon",u_isTextured); //CHANGE TO CUBE
+	var n;
+	
 	// Rotate, and then translate
 	modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
 	modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
 	modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
 	
 	// ************* MAIN DRAWS *************
+	// ***TABLE***
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(50.0, 0, 0);  // Translation
+	//draw table octagon
+	n = reintVertexBuffers(gl,"octagon",u_isTextured);
 	gl.activeTexture(gl.TEXTURE3);
 	gl.bindTexture(gl.TEXTURE_2D, wood);
 	gl.uniform1i(u_Sampler, 3);
-	// Model building base - split into 2 halves
 	pushMatrix(modelMatrix);
 	modelMatrix.scale(10.0, 1.0, 10.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	/*
+	//draw table connector 1
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(0, -1, 0);  // Translation
+	modelMatrix.scale(17.0, 1.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//draw (2) seats
+	pushMatrix(modelMatrix);
+	modelMatrix.rotate(90,0,1,0);
+	modelMatrix.scale(8.0, 1.0, 2.0); // Scale
+	modelMatrix.translate(0, -0.5, 3.75);  // Translation
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix.translate(0, 0, -7.5);  // Translation
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//draw table connector 2
+	pushMatrix(modelMatrix);
+	modelMatrix.rotate(90,0,1,0);
+	modelMatrix.translate(0, -1, 0);  // Translation
+	modelMatrix.scale(17.0, 1.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//draw (2) seats
+	pushMatrix(modelMatrix);
+	modelMatrix.scale(8.0, 1.0, 2.0); // Scale
+	modelMatrix.translate(0, -0.5, 3.75);  // Translation
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix.translate(0, 0, -7.5);  // Translation
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//draw stand
+	pushMatrix(modelMatrix);
+	modelMatrix.rotate(90,0,0,1);
+	modelMatrix.translate(-3.0, 0, 0);  // Translation
+	modelMatrix.scale(6.0, 1.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	// ***TABLE***
+	modelMatrix = popMatrix();
+	
+	
+	// Model building base - split into 2 halves
 	//front base of building
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
 	gl.uniform1i(u_Sampler, 0);
 	// Model building base - split into 2 halves
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(-5.0, 0, 0);  // Translation
-	modelMatrix.scale(10.0, 5.0, 20.0); // Scale
+	modelMatrix.translate(-10.0, 0, 0);  // Translation
+	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//rear base of building
@@ -389,22 +435,21 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.bindTexture(gl.TEXTURE_2D, brownBrick);
 	gl.uniform1i(u_Sampler, 1);
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(5.0, 0, 0);  // Translation
-	modelMatrix.scale(10.0, 5.0, 20.0); // Scale
+	modelMatrix.translate(10.0, 0, 0);  // Translation
+	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	
 	//main building roof
 	n = reintVertexBuffers(gl,"corner",u_isTextured);
 	gl.activeTexture(gl.TEXTURE2);
 	gl.bindTexture(gl.TEXTURE_2D, grass);
 	gl.uniform1i(u_Sampler, 2);
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(0, 5.0, 0);  // Translation
-	modelMatrix.scale(20.0, 5.0, 20.0); // Scale
+	modelMatrix.translate(0, 10.0, 0);  // Translation
+	modelMatrix.scale(40.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	*/
+	
 }
 
 function reintVertexBuffers(gl,shape,u_isTextured){
