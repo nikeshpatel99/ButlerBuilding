@@ -2,6 +2,9 @@
 
 //textures
 var grass;
+var wood;
+var yellowBrick;
+var brownBrick;
 
 var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
@@ -366,8 +369,53 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	// ************* MAIN DRAWS *************
 	// ***TABLE***
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(50.0, 0, 0);  // Translation
+	modelMatrix.scale(0.6,0.6,0.6);
+	modelMatrix.translate(0, -4.0, 0);
+	modelMatrix.translate(50.0, 0, -25.0);  // Origin offest for the table
+	drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler);
+	modelMatrix.translate(0, 0, 55.0);  // Origin offest for the table
+	drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler);
+	modelMatrix = popMatrix();
+	// ***TABLE***
+	// *** MAIN BUILDING ***
+	// Model building base - split into 2 halves
+	//front base of building
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	gl.activeTexture(gl.TEXTURE0);
+	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
+	gl.uniform1i(u_Sampler, 0);
+	// Model building base - split into 2 halves
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-10.0, 0, 0);  // Translation
+	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//rear base of building
+	gl.activeTexture(gl.TEXTURE1);
+	gl.bindTexture(gl.TEXTURE_2D, brownBrick);
+	gl.uniform1i(u_Sampler, 1);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(10.0, 0, 0);  // Translation
+	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	//main building roof
+	n = reintVertexBuffers(gl,"corner",u_isTextured);
+	gl.activeTexture(gl.TEXTURE2);
+	gl.bindTexture(gl.TEXTURE_2D, grass);
+	gl.uniform1i(u_Sampler, 2);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(0, 10.0, 0);  // Translation
+	modelMatrix.scale(40.0, 10.0, 40.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	// *** MAIN BUILDING ***
+	
+}
+
+function drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler){
 	//draw table octagon
+	var n;
 	n = reintVertexBuffers(gl,"octagon",u_isTextured);
 	gl.activeTexture(gl.TEXTURE3);
 	gl.bindTexture(gl.TEXTURE_2D, wood);
@@ -414,43 +462,8 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix.scale(6.0, 1.0, 1.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	// ***TABLE***
-	modelMatrix = popMatrix();
-	
-	
-	// Model building base - split into 2 halves
-	//front base of building
-	n = reintVertexBuffers(gl,"cube",u_isTextured);
-	gl.activeTexture(gl.TEXTURE0);
-	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
-	gl.uniform1i(u_Sampler, 0);
-	// Model building base - split into 2 halves
-	pushMatrix(modelMatrix);
-	modelMatrix.translate(-10.0, 0, 0);  // Translation
-	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
-	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
-	modelMatrix = popMatrix();
-	//rear base of building
-	gl.activeTexture(gl.TEXTURE1);
-	gl.bindTexture(gl.TEXTURE_2D, brownBrick);
-	gl.uniform1i(u_Sampler, 1);
-	pushMatrix(modelMatrix);
-	modelMatrix.translate(10.0, 0, 0);  // Translation
-	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
-	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
-	modelMatrix = popMatrix();
-	//main building roof
-	n = reintVertexBuffers(gl,"corner",u_isTextured);
-	gl.activeTexture(gl.TEXTURE2);
-	gl.bindTexture(gl.TEXTURE_2D, grass);
-	gl.uniform1i(u_Sampler, 2);
-	pushMatrix(modelMatrix);
-	modelMatrix.translate(0, 10.0, 0);  // Translation
-	modelMatrix.scale(40.0, 10.0, 40.0); // Scale
-	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
-	modelMatrix = popMatrix();
-	
-}
+
+};
 
 function reintVertexBuffers(gl,shape,u_isTextured){
 	var n = initVertexBuffers(gl,shape,u_isTextured);
