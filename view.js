@@ -1,3 +1,4 @@
+"use strict";
 //Butler Building WebGL main program
 
 //textures
@@ -7,6 +8,7 @@ var wood;
 var yellowBrick;
 var brownBrick;
 var glassPane;
+var brickRoad;
 
 var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
@@ -35,6 +37,7 @@ var FSHADER_SOURCE=
 	"#endif\n" +
 	"uniform sampler2D u_Sampler;\n" +
 	"uniform vec3 u_LightColor;\n" +
+	"uniform vec3 u_AmbientLight;\n" +
 	"uniform vec3 u_LightDirection;\n" +
 	"uniform bool u_isTextured;\n" +
 	"uniform bool u_isLighting;\n" +
@@ -45,17 +48,19 @@ var FSHADER_SOURCE=
 	"void main() {\n" +
 	"	vec3 normal = normalize(v_Normal);\n" +
 	"	float nDotL = max(dot(u_LightDirection, normal) , 0.0);\n" +
-	"	if(u_isLighting){\n" +
+	"	if(u_isTextured && u_isLighting){\n" +
+	"		vec4 texColor = texture2D(u_Sampler, v_TexCoords);\n" +
+	"		vec3 diffuse = u_LightColor * texColor.rgb * nDotL;\n" +
+	"		vec3 ambient = u_AmbientLight * texColor.rgb;\n" +
+	"		gl_FragColor = vec4(diffuse, texColor.a);\n" +
+	"	}\n" +
+	"	else if(u_isLighting){\n" +
 	"		vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n" +
 	"		gl_FragColor = vec4(diffuse, v_Color.a);\n" +
 	"	}else{\n" +
 	"		gl_FragColor = v_Color;\n" +
 	"	}\n" +
-	"	if(u_isTextured){\n" +
-	"		vec4 texColor = texture2D(u_Sampler, v_TexCoords);\n" +
-	"		vec3 diffuse = u_LightColor * texColor.rgb * nDotL;\n" +
-	"		gl_FragColor = vec4(diffuse, texColor.a);\n" +
-	"	}\n" +
+
 	"}\n";
 
 var viewMatrix = new Matrix4();　// The view matrix
@@ -99,7 +104,10 @@ function loadTexture(gl, s) {
 		// power of 2 in both dimensions.
 		if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
 			// Yes, it"s a power of 2. Generate mips.
-			gl.generateMipmap(gl.TEXTURE_2D);
+			//gl.generateMipmap(gl.TEXTURE_2D);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 			console.log("Image is 2^x");
 		} else {
 			// Not a power of 2. Turn off mips and set
@@ -140,6 +148,7 @@ function main(){
 	wood = loadTexture(gl, "./img/wood.jpg");
 	glassPane = loadTexture(gl, "./img/glassPane.jpg");
 	grass = loadTexture(gl, "./img/grass.png");
+	brickRoad = loadTexture(gl, "./img/brickRoad.jpg");
 	
 	//viewport settings
 	//gl.viewport(0, 0, canvas.width, canvas.height);
@@ -156,6 +165,7 @@ function main(){
 	var u_isLighting = gl.getUniformLocation(gl.program, "u_isLighting");
 	var u_isTextured = gl.getUniformLocation(gl.program, "u_isTextured");
 	var u_Sampler = gl.getUniformLocation(gl.program, "u_Sampler");
+	var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
 	
 	if (!u_ModelMatrix || !u_ViewMatrix || !u_NormalMatrix || !u_ProjMatrix || !u_LightColor || !u_LightDirection || !u_isLighting) { 
 		console.log("Failed to get the storage location of one of the matrices in this wonderful program");
@@ -169,10 +179,12 @@ function main(){
 	var lightDirection = new Vector3([0.5, 3.0, 4.0]);
 	lightDirection.normalize(); // Normalize
 	gl.uniform3fv(u_LightDirection, lightDirection.elements);
-	
+	//set ambient light colour
+	var ambientLight = new Vector3([0, 195, 51]);
+	gl.uniform3fv(u_AmbientLight, ambientLight.elements);
 	// calculate the view matrix and projection matrix
 	viewMatrix.setLookAt(0, 20, 70, 0, 0, -100, 0, 1, 0);
-	projMatrix.setPerspective(70, canvas.width/canvas.height, 1, 100);
+	projMatrix.setPerspective(70, canvas.width/canvas.height, 1, 120);
 	// Pass the view and projection matrix to u_ViewMatrix, u_ProjMatrix
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
@@ -183,7 +195,7 @@ function main(){
 	};
 	 
 	draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler);
-	
+	//animate(0);
 };
 
 function keydown(ev, gl, u_ModelMatrix, u_NormalMatrix, u_isLighting,u_isTextured ,u_Sampler) {
@@ -337,7 +349,15 @@ function pushMatrix(m) { // Store the specified matrix to the array
 function popMatrix() { // Retrieve the matrix from the array
 	return g_matrixStack.pop();
 }
-
+/*
+	######  ######     #    #     #    ####### #     # #     #  #####  #######
+	#     # #     #   # #   #  #  #    #       #     # ##    # #     #    #
+	#     # #     #  #   #  #  #  #    #       #     # # #   # #          #
+	#     # ######  #     # #  #  #    #####   #     # #  #  # #          #
+	#     # #   #   ####### #  #  #    #       #     # #   # # #          #
+	#     # #    #  #     # #  #  #    #       #     # #    ## #     #    #
+	######  #     # #     #  ## ##     #        #####  #     #  #####     #
+*/
 function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler) {
 	// Clear color and depth buffer
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -345,7 +365,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.uniform1i(u_isLighting, false); // Will not apply lighting
 
 	//bind textures to buffers
-	// 0 = yellowBrick, 1 = brownBrick, 2 = grassCombo, 3 = wood, 4 = glass
+	// 0 = yellowBrick, 1 = brownBrick, 2 = grassCombo, 3 = wood, 4 = glass, 5 = grass, 6 = brickRoad
 	gl.activeTexture(gl.TEXTURE0);
 	gl.bindTexture(gl.TEXTURE_2D, yellowBrick);
 	gl.activeTexture(gl.TEXTURE1);
@@ -358,42 +378,42 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.bindTexture(gl.TEXTURE_2D, glassPane);
 	gl.activeTexture(gl.TEXTURE5);
 	gl.bindTexture(gl.TEXTURE_2D, grass);
+	gl.activeTexture(gl.TEXTURE6);
+	gl.bindTexture(gl.TEXTURE_2D, brickRoad);
 	
-	// Set the vertex coordinates and color (for the x, y axes)
-	var n = initAxesVertexBuffers(gl);
-	if (n < 0) {
-		console.log("Failed to set the vertex information");
-		return;
-	}
-
-	// Calculate the view matrix and the projection matrix
-	modelMatrix.setTranslate(0, 0, 0);  // No Translation
-	// Pass the model matrix to the uniform variable
-	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-
-	// Draw x and y axes
-	gl.drawArrays(gl.LINES, 0, n);
-
 	gl.uniform1i(u_isLighting, true); // Will apply lighting
 	gl.uniform1i(u_isTextured, false); // Will not apply textures until changed
 	
-	var n;
+	let n;
 	
 	// Rotate, and then translate
 	modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
 	modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
 	modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
-	// ***FLOOR***
-	gl.activeTexture(gl.TEXTURE5);
-	gl.uniform1i(u_Sampler, 5);
+	// ************* MAIN DRAWS *************
+	//door
 	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
+	pushMatrix(modelMatrix);
+	modelMatrix.scale(0.1, 20, 8); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix.translate(0,0,-1);
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	
+	/*
+	// ***FLOOR***
+	//road part
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	gl.activeTexture(gl.TEXTURE6);
+	gl.uniform1i(u_Sampler, 6);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(0,-5.5,0);
 	modelMatrix.scale(80.0, 0.5, 80.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
-	
-	// ************* MAIN DRAWS *************
+	// ***FLOOR***
 	// ***TABLE***
 	pushMatrix(modelMatrix);
 	modelMatrix.scale(0.6,0.6,0.6);
@@ -408,21 +428,21 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	// *** MAIN BUILDING ***
 	// Model building base - split into 2 halves
 	//front base of building
-	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	//n = reintVertexBuffers(gl,"cube",u_isTextured);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.uniform1i(u_Sampler, 0);
 	// Model building base - split into 2 halves
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(-10.0, 0, 0);  // Translation
-	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
+	modelMatrix.translate(-15.0, 0, 0);  // Translation
+	modelMatrix.scale(10.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//rear base of building
 	gl.activeTexture(gl.TEXTURE1);
 	gl.uniform1i(u_Sampler, 1);
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(10.0, 0, 0);  // Translation
-	modelMatrix.scale(20.0, 10.0, 40.0); // Scale
+	modelMatrix.translate(5.0, 0, 0);  // Translation
+	modelMatrix.scale(30.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//main building roof
@@ -435,7 +455,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	// *** MAIN BUILDING ***
-	
+	*/
 }
 
 function drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler){
@@ -514,3 +534,9 @@ function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 
 	modelMatrix = popMatrix();
 }
+
+function animate(time){
+	
+	
+	window.requestAnimationFrame(animate);
+};

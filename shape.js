@@ -1,3 +1,4 @@
+"use strict";
 //shape arrays
 
 function octagon(){
@@ -151,11 +152,11 @@ function corner(){
 	// Create a cube cut diagonally
 
 	var vertices = new Float32Array([   // Coordinates
-	-0.5, 0.5, 0.5,  -0.5,-0.5, 0.5,   0.5,-0.5, 0.5, // v1-v2-v3 front (triangle)
-	-0.5, 0.5, 0.5,   0.5,-0.5, 0.5,   0.5,-0.5,-0.5,   -0.5, 0.5,-0.5, // v1-v3-v4-v6 right (square face)
-	-0.5, 0.5, 0.5,   -0.5, 0.5,-0.5,   -0.5,-0.5,-0.5,   -0.5,-0.5, 0.5, // v1-v6-v7-v2 left (square face)
+	-0.5, 0.25, 0.5,  -0.5,-0.5, 0.5,   0.5,-0.5, 0.5, // v1-v2-v3 front (triangle)
+	-0.5, 0.25, 0.5,   0.5,-0.5, 0.5,   0.5,-0.5,-0.5,   -0.5, 0.25,-0.5, // v1-v3-v4-v6 right (square face)
+	-0.5, 0.25, 0.5,   -0.5, 0.25,-0.5,   -0.5,-0.5,-0.5,   -0.5,-0.5, 0.5, // v1-v6-v7-v2 left (square face)
 	-0.5,-0.5,-0.5,   0.5,-0.5,-0.5,   0.5,-0.5, 0.5,  -0.5,-0.5, 0.5, // v7-v4-v3-v2 down (square face)
-	 0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,  -0.5, 0.5,-0.5  // v4-v7-v6 back (triangle)
+	 0.5,-0.5,-0.5,  -0.5,-0.5,-0.5,  -0.5, 0.25,-0.5  // v4-v7-v6 back (triangle)
 	]);
 
 
