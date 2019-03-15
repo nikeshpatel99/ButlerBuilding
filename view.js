@@ -283,7 +283,7 @@ function initVertexBuffers(gl,shape,u_isTextured) {
 	}
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.DYNAMIC_DRAW);
 
 	return indices.length;
 };
@@ -297,7 +297,7 @@ function initArrayBuffer (gl, attribute, data, num, type) {
 	}
 	// Write date into the buffer object
 	gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-	gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
 	// Assign the buffer object to the attribute variable
 	var a_attribute = gl.getAttribLocation(gl.program, attribute);
 	if (a_attribute < 0) {
@@ -409,10 +409,9 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
 	modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
 	// ************* MAIN DRAWS *************
-	
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	//front door - ANIMATABLE
 	if(!animating){
-		n = reintVertexBuffers(gl,"cube",u_isTextured);
 		gl.activeTexture(gl.TEXTURE4);
 		gl.uniform1i(u_Sampler, 4);
 		pushMatrix(modelMatrix);
@@ -422,13 +421,12 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 		modelMatrix.translate(0,0,1);
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
-		modelMatrix.translate(0,0,0);
+		///modelMatrix.translate(0,0,0);
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
 	}	
 	//back door
 	if(!animating){
-		n = reintVertexBuffers(gl,"cube",u_isTextured);
 		gl.activeTexture(gl.TEXTURE4);
 		gl.uniform1i(u_Sampler, 4);
 		pushMatrix(modelMatrix);
@@ -438,14 +436,29 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 		modelMatrix.translate(0,0,1);
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
-		modelMatrix.translate(0,0,0);
+		///modelMatrix.translate(0,0,0);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+	}
+	
+	//left side door - ANIMATABLE
+	if(!animating){
+		gl.activeTexture(gl.TEXTURE4);
+		gl.uniform1i(u_Sampler, 4);
+		pushMatrix(modelMatrix);
+		//modelMatrix.translate(-20,-1,-12);
+		modelMatrix.translate(-20,-1,-15);
+		modelMatrix.scale(0.1, 8, 4); // Scale
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(0,0,1);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+		//modelMatrix.translate(0,0,0);
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
 	}	
-
 	// ***FLOOR***
 	//road part
-	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	gl.activeTexture(gl.TEXTURE6);
 	gl.uniform1i(u_Sampler, 6);
 	pushMatrix(modelMatrix);
@@ -465,12 +478,39 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix = popMatrix();
 	// ***TABLE***
 	
+	// *** PILLARS ***
+	gl.activeTexture(gl.TEXTURE0);
+	gl.uniform1i(u_Sampler, 0);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20.4,0,-19);  // Translation
+	modelMatrix.scale(1.0, 10.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20.4,0,-8.4);  // Translation
+	modelMatrix.scale(1.0, 10.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20.4,0,8.4);  // Translation
+	modelMatrix.scale(1.0, 10.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20.4,0,19);  // Translation
+	modelMatrix.scale(1.0, 10.0, 1.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	// *** PILLARS ***
+	
+	// *** BROWN PANELLING ***
+	
+	
+	
 	// *** MAIN BUILDING ***
 	// Model building base - split into 2 halves
 	//front base of building
 	//n = reintVertexBuffers(gl,"cube",u_isTextured);
-	gl.activeTexture(gl.TEXTURE0);
-	gl.uniform1i(u_Sampler, 0);
 	// Model building base - split into 2 halves
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(-15.0, 0, 0);  // Translation
@@ -495,7 +535,6 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	// *** MAIN BUILDING ***
-	
 }
 
 function drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler){
@@ -559,7 +598,7 @@ function reintVertexBuffers(gl,shape,u_isTextured){
 };
 
 function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
-	pushMatrix(modelMatrix);
+	//pushMatrix(modelMatrix);
 
 	// Pass the model matrix to the uniform variable
 	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
@@ -572,7 +611,7 @@ function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 	// Draw
 	gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
 
-	modelMatrix = popMatrix();
+	//modelMatrix = popMatrix();
 }
 
 var framesRendered = 0;
@@ -596,6 +635,7 @@ function renderLoop(now){
 	//render frame for each animatable.
 	animateDoor1(framesRendered);
 	animateDoor2(framesRendered);
+	//animateDoor3(framesRendered);
 	//increment frame counter
 	framesRendered++;
 	if(framesRendered != 120){
@@ -668,5 +708,35 @@ function animateDoor2(frame){
 	modelMatrix = popMatrix();
 	if(frame == 59 || frame == 119){
 		door2Out = !door2Out;
+	}
+};
+
+var door3Out = true;
+function animateDoor3(frame){
+	const degree = 90;
+	const angle = ((degree/step)*59)%90;
+	console.log(angle);
+	//draw stuff
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-25,-1,-12);
+	modelMatrix.scale(0.1, 8, 4); // Scale
+	pushMatrix(modelMatrix);
+	if(door3Out){//left door
+		modelMatrix.translate(0,0,1);
+		modelMatrix = popMatrix();
+		modelMatrix.rotate(-45,0,1,0);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		
+		
+	}
+	else{
+
+	}
+	modelMatrix = popMatrix();
+	if(frame == 59 || frame == 119){
+		door3Out = !door3Out;
 	}
 };
