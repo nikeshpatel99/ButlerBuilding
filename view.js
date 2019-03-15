@@ -113,8 +113,8 @@ function loadTexture(gl, s) {
 		if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
 			// Yes, it"s a power of 2. Generate mips.
 			//gl.generateMipmap(gl.TEXTURE_2D);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 			console.log("Image is 2^x");
 		} else {
@@ -245,8 +245,14 @@ function initVertexBuffers(gl,shape,u_isTextured) {
 	var data;
 	switch(shape)
 	{
+		case "brick":
+			data = brick();
+			break;
 		case "cube":
 			data = cube();
+			break;
+		case "flat":
+			data = flat();
 			break;
 		case "corner":
 			data = corner();
@@ -459,6 +465,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	}	
 	// ***FLOOR***
 	//road part
+	n = reintVertexBuffers(gl,"flat",u_isTextured);
 	gl.activeTexture(gl.TEXTURE6);
 	gl.uniform1i(u_Sampler, 6);
 	pushMatrix(modelMatrix);
@@ -468,6 +475,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	modelMatrix = popMatrix();
 	// ***FLOOR***
 	// ***TABLE***
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	pushMatrix(modelMatrix);
 	modelMatrix.scale(0.6,0.6,0.6);
 	modelMatrix.translate(0, -4.0, 0);
@@ -511,6 +519,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	gl.uniform1i(u_isTextured, true);
+	// *** BROWN PANELLING ***
 	
 	// *** WINDOWS ***
 	gl.activeTexture(gl.TEXTURE4);
@@ -558,6 +567,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	//front base of building
 	//n = reintVertexBuffers(gl,"cube",u_isTextured);
 	// Model building base - split into 2 halves
+	n = reintVertexBuffers(gl,"brick",u_isTextured);
 	gl.activeTexture(gl.TEXTURE0);
 	gl.uniform1i(u_Sampler, 0);
 	pushMatrix(modelMatrix);
@@ -566,6 +576,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//rear base of building
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
 	gl.activeTexture(gl.TEXTURE1);
 	gl.uniform1i(u_Sampler, 1);
 	pushMatrix(modelMatrix);
@@ -729,7 +740,7 @@ function animateDoor1(frame){
 
 var door2Out = true;
 function animateDoor2(frame){
-	const distance = 1;
+	const distance = 0.4;
 	const translateDistance = (distance + (frame%60)) / step;
 	//draw stuff
 	n = reintVertexBuffers(gl,"cube",u_isTextured);
