@@ -145,6 +145,41 @@ function cube(){
 	return [vertices,colors,normals,indices,texCoords];
 };
 
+function plant(){
+
+	let data = cube();
+	
+	var colors = new Float32Array([    // Colors
+	10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 
+	0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 
+	45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,
+	10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 0,10, 45, 
+	0,10, 45, 0]);
+	
+	data[1] = colors;
+
+	return data;
+};
+
+
+
+function bin(){
+
+	let data = cube();
+	
+	var colors = new Float32Array([    // Colors
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+	
+	data[1] = colors;
+
+	return data;
+};
+
 function brick(){
 	var vertices = new Float32Array([   // Coordinates
 	 0.5, 0.5, 0.5,  -0.5, 0.5, 0.5,  -0.5,-0.5, 0.5,   0.5,-0.5, 0.5, // v0-v1-v2-v3 front
