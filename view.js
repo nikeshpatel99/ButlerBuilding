@@ -521,7 +521,15 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 		modelMatrix.scale(1.0, 3.7, 4); // Scale
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
-
+	}
+	
+	let pos = [-15,-8,8,15];
+	for(var i in pos){
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(20.4,1.0,pos[i]);  // Translation
+		modelMatrix.scale(1.0, 3.7, 4); // Scale
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
 	}
 	
 	// *** WINDOWS ***
