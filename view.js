@@ -447,7 +447,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 		gl.uniform1i(u_Sampler, 4);
 		pushMatrix(modelMatrix);
 		//modelMatrix.translate(-20,-1,-12);
-		modelMatrix.translate(-20,-1,-15);
+		modelMatrix.translate(-20,-1,-15.8);
 		modelMatrix.scale(0.1, 8, 4); // Scale
 		pushMatrix(modelMatrix);
 		modelMatrix.translate(0,0,1);
@@ -504,14 +504,35 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	// *** PILLARS ***
 	
 	// *** BROWN PANELLING ***
+	gl.uniform1i(u_isTextured, false);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20.4,10.6,0);  // Translation
+	modelMatrix.scale(1.0, 3.75, 40.0); // Scale
+	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	modelMatrix = popMatrix();
+	gl.uniform1i(u_isTextured, true);
 	
+	// *** WINDOWS ***
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
+	for(var i=-18; i<19;i+=4){
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(-20.4,6.8,i);  // Translation
+		modelMatrix.scale(1.0, 3.7, 4); // Scale
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+
+	}
 	
+	// *** WINDOWS ***
 	
 	// *** MAIN BUILDING ***
 	// Model building base - split into 2 halves
 	//front base of building
 	//n = reintVertexBuffers(gl,"cube",u_isTextured);
 	// Model building base - split into 2 halves
+	gl.activeTexture(gl.TEXTURE0);
+	gl.uniform1i(u_Sampler, 0);
 	pushMatrix(modelMatrix);
 	modelMatrix.translate(-15.0, 0, 0);  // Translation
 	modelMatrix.scale(10.0, 10.0, 40.0); // Scale
