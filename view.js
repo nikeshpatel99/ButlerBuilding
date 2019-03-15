@@ -515,6 +515,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	// *** WINDOWS ***
 	gl.activeTexture(gl.TEXTURE4);
 	gl.uniform1i(u_Sampler, 4);
+	// front windows
 	for(var i=-18; i<19;i+=4){
 		pushMatrix(modelMatrix);
 		modelMatrix.translate(-20.4,6.8,i);  // Translation
@@ -522,16 +523,34 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
 	}
-	
+	//rear windows
 	let pos = [-15,-8,8,15];
 	for(var i in pos){
 		pushMatrix(modelMatrix);
 		modelMatrix.translate(20.4,1.0,pos[i]);  // Translation
-		modelMatrix.scale(1.0, 3.7, 4); // Scale
+		modelMatrix.scale(0.4, 3.7, 4); // Scale
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+	}
+	//left windows
+	pos = [-17,-8,-6,2,4,6,8,10,17]
+	for(var i in pos){
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(pos[i],1.0,-20);  // Translation
+		modelMatrix.scale(1.0, 5, 0.6); // Scale
 		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 		modelMatrix = popMatrix();
 	}
 	
+	//right windows
+	pos = [17,8,6,-2,-4,-6,-8,-10,-17]
+	for(var i in pos){
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(pos[i],1.0,20);  // Translation
+		modelMatrix.scale(1.0, 5, 0.6); // Scale
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+	}
 	// *** WINDOWS ***
 	
 	// *** MAIN BUILDING ***
@@ -542,16 +561,16 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.activeTexture(gl.TEXTURE0);
 	gl.uniform1i(u_Sampler, 0);
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(-15.0, 0, 0);  // Translation
-	modelMatrix.scale(10.0, 10.0, 40.0); // Scale
+	modelMatrix.translate(-17.3, 0, 0);  // Translation
+	modelMatrix.scale(5.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//rear base of building
 	gl.activeTexture(gl.TEXTURE1);
 	gl.uniform1i(u_Sampler, 1);
 	pushMatrix(modelMatrix);
-	modelMatrix.translate(5.0, 0, 0);  // Translation
-	modelMatrix.scale(30.0, 10.0, 40.0); // Scale
+	modelMatrix.translate(2.5, 0, 0);  // Translation
+	modelMatrix.scale(35.0, 10.0, 40.0); // Scale
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	//main building roof
