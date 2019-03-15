@@ -10,6 +10,14 @@ var brownBrick;
 var glassPane;
 var brickRoad;
 
+var n;
+var gl;
+var u_ModelMatrix;
+var u_NormalMatrix;
+var u_isLighting;
+var u_Sampler;
+var u_isTextured;
+
 var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
 	"attribute vec4 a_Color;\n" +
@@ -52,7 +60,7 @@ var FSHADER_SOURCE=
 	"		vec4 texColor = texture2D(u_Sampler, v_TexCoords);\n" +
 	"		vec3 diffuse = u_LightColor * texColor.rgb * nDotL;\n" +
 	"		vec3 ambient = u_AmbientLight * texColor.rgb;\n" +
-	"		gl_FragColor = vec4(diffuse, texColor.a);\n" +
+	"		gl_FragColor = vec4(diffuse + ambient, texColor.a);\n" +
 	"	}\n" +
 	"	else if(u_isLighting){\n" +
 	"		vec3 diffuse = u_LightColor * v_Color.rgb * nDotL;\n" +
@@ -131,7 +139,7 @@ function isPowerOf2(value) {
 function main(){
 	var canvas = document.getElementById("webgl");
 	
-	var gl = getWebGLContext(canvas);
+	gl = getWebGLContext(canvas);
 	if(!gl){
 		console.log("Failed to get the rendering context for WebGL");
 		return;
@@ -156,15 +164,15 @@ function main(){
 	gl.enable(gl.DEPTH_TEST);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	
-	var u_ModelMatrix = gl.getUniformLocation(gl.program, "u_ModelMatrix");
+	u_ModelMatrix = gl.getUniformLocation(gl.program, "u_ModelMatrix");
 	var u_ViewMatrix = gl.getUniformLocation(gl.program, "u_ViewMatrix");
 	var u_ProjMatrix = gl.getUniformLocation(gl.program, "u_ProjMatrix");
-	var u_NormalMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
+	u_NormalMatrix = gl.getUniformLocation(gl.program, "u_NormalMatrix");
 	var u_LightColor = gl.getUniformLocation(gl.program, "u_LightColor");
 	var u_LightDirection = gl.getUniformLocation(gl.program, "u_LightDirection");
-	var u_isLighting = gl.getUniformLocation(gl.program, "u_isLighting");
-	var u_isTextured = gl.getUniformLocation(gl.program, "u_isTextured");
-	var u_Sampler = gl.getUniformLocation(gl.program, "u_Sampler");
+	u_isLighting = gl.getUniformLocation(gl.program, "u_isLighting");
+	u_isTextured = gl.getUniformLocation(gl.program, "u_isTextured");
+	u_Sampler = gl.getUniformLocation(gl.program, "u_Sampler");
 	var u_AmbientLight = gl.getUniformLocation(gl.program, "u_AmbientLight");
 	
 	if (!u_ModelMatrix || !u_ViewMatrix || !u_NormalMatrix || !u_ProjMatrix || !u_LightColor || !u_LightDirection || !u_isLighting) { 
@@ -180,7 +188,7 @@ function main(){
 	lightDirection.normalize(); // Normalize
 	gl.uniform3fv(u_LightDirection, lightDirection.elements);
 	//set ambient light colour
-	var ambientLight = new Vector3([0, 195, 51]);
+	var ambientLight = new Vector3([0.255, 0.250, 0.158]);
 	gl.uniform3fv(u_AmbientLight, ambientLight.elements);
 	// calculate the view matrix and projection matrix
 	viewMatrix.setLookAt(0, 20, 70, 0, 0, -100, 0, 1, 0);
@@ -189,33 +197,47 @@ function main(){
 	gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 	gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 	
+	gl.uniform1i(u_isTextured, true); // Will apply textures until changed
+	
 	//allows for camera rotation
 	document.onkeydown = function(ev){
 		keydown(ev, gl, u_ModelMatrix, u_NormalMatrix, u_isLighting,u_isTextured, u_Sampler);
 	};
 	 
 	draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler);
-	//animate(0);
 };
-
+var animating = false;
+var key = -1;
 function keydown(ev, gl, u_ModelMatrix, u_NormalMatrix, u_isLighting,u_isTextured ,u_Sampler) {
 	switch (ev.keyCode) {
-	case 40: // Up arrow key -> the positive rotation of arm1 around the y-axis
-		g_xAngle = (g_xAngle + ANGLE_STEP) % 360;
-		break;
-	case 38: // Down arrow key -> the negative rotation of arm1 around the y-axis
-		g_xAngle = (g_xAngle - ANGLE_STEP) % 360;
-		break;
-	case 39: // Right arrow key -> the positive rotation of arm1 around the y-axis
-		g_yAngle = (g_yAngle + ANGLE_STEP) % 360;
-		break;
-	case 37: // Left arrow key -> the negative rotation of arm1 around the y-axis
-		g_yAngle = (g_yAngle - ANGLE_STEP) % 360;
-		break;
-	default: return; // Skip drawing at no effective action
+		case 70:
+			if(!animating){
+				renderLoop();
+				animating = true;
+			}
+			break;
+		case 40: // Up arrow key -> the positive rotation of arm1 around the y-axis
+			g_xAngle = (g_xAngle + ANGLE_STEP) % 360;
+			break;
+		case 38: // Down arrow key -> the negative rotation of arm1 around the y-axis
+			g_xAngle = (g_xAngle - ANGLE_STEP) % 360;
+			break;
+		case 39: // Right arrow key -> the positive rotation of arm1 around the y-axis
+			g_yAngle = (g_yAngle + ANGLE_STEP) % 360;
+			break;
+		case 37: // Left arrow key -> the negative rotation of arm1 around the y-axis
+			g_yAngle = (g_yAngle - ANGLE_STEP) % 360;
+			break;
+		default: return; // Skip drawing at no effective action
 	}
-	//redraw the scene
-	draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting,u_isTextured, u_Sampler);
+	if(animating && (ev.keyCode === 40 || ev.keyCode === 38 || ev.keyCode === 39 || ev.keyCode === 37)){
+		key = ev.keyCode;
+	}
+	else{
+		//redraw the scene
+		draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting,u_isTextured, u_Sampler);
+		key = -1;
+	}
 };
 
 function initVertexBuffers(gl,shape,u_isTextured) {
@@ -358,11 +380,10 @@ function popMatrix() { // Retrieve the matrix from the array
 	#     # #    #  #     # #  #  #    #       #     # #    ## #     #    #
 	######  #     # #     #  ## ##     #        #####  #     #  #####     #
 */
-function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler) {
+
+function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler){
 	// Clear color and depth buffer
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	gl.uniform1i(u_isLighting, false); // Will not apply lighting
 
 	//bind textures to buffers
 	// 0 = yellowBrick, 1 = brownBrick, 2 = grassCombo, 3 = wood, 4 = glass, 5 = grass, 6 = brickRoad
@@ -382,27 +403,31 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	gl.bindTexture(gl.TEXTURE_2D, brickRoad);
 	
 	gl.uniform1i(u_isLighting, true); // Will apply lighting
-	gl.uniform1i(u_isTextured, false); // Will not apply textures until changed
-	
-	let n;
 	
 	// Rotate, and then translate
 	modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
 	modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
 	modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
 	// ************* MAIN DRAWS *************
-	//door
-	n = reintVertexBuffers(gl,"cube",u_isTextured);
-	gl.activeTexture(gl.TEXTURE4);
-	gl.uniform1i(u_Sampler, 4);
-	pushMatrix(modelMatrix);
-	modelMatrix.scale(0.1, 20, 8); // Scale
-	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
-	modelMatrix.translate(0,0,-1);
-	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
-	modelMatrix = popMatrix();
 	
-	/*
+	//door - ANIMATABLE
+	if(!animating){
+		n = reintVertexBuffers(gl,"cube",u_isTextured);
+		gl.activeTexture(gl.TEXTURE4);
+		gl.uniform1i(u_Sampler, 4);
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(-20,-1,-2);
+		modelMatrix.scale(0.1, 8, 4); // Scale
+		pushMatrix(modelMatrix);
+		modelMatrix.translate(0,0,1);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+		modelMatrix.translate(0,0,0);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+	}	
+		
+	
 	// ***FLOOR***
 	//road part
 	n = reintVertexBuffers(gl,"cube",u_isTextured);
@@ -455,7 +480,7 @@ function draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_S
 	drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
 	modelMatrix = popMatrix();
 	// *** MAIN BUILDING ***
-	*/
+	
 }
 
 function drawTable(gl, u_ModelMatrix, u_NormalMatrix, u_isTextured, u_Sampler){
@@ -535,8 +560,65 @@ function drawbox(gl, u_ModelMatrix, u_NormalMatrix, n) {
 	modelMatrix = popMatrix();
 }
 
-function animate(time){
-	
-	
-	window.requestAnimationFrame(animate);
+var framesRendered = 0;
+const step = 60;
+function renderLoop(now){
+	//check for keypress, if so, set base modelMatrix.
+	switch (key) {
+		case 40: // Up arrow key -> the positive rotation of arm1 around the y-axis
+		case 38: // Down arrow key -> the negative rotation of arm1 around the y-axis
+		case 39: // Right arrow key -> the positive rotation of arm1 around the y-axis
+		case 37: // Left arrow key -> the negative rotation of arm1 around the y-axis
+			// Rotate, and then translate
+			modelMatrix.setTranslate(0, 0, 0);  // Translation (No translation is supported here)
+			modelMatrix.rotate(g_yAngle, 0, 1, 0); // Rotate along y axis
+			modelMatrix.rotate(g_xAngle, 1, 0, 0); // Rotate along x axis
+			break;
+		default: break; // no need to apply rotation.
+	}
+	//render static objects
+	draw(gl, u_ModelMatrix, u_NormalMatrix, u_isLighting, u_isTextured, u_Sampler);
+	//render frame for each animatable.
+	animateDoor1(framesRendered);
+	//increment frame counter
+	framesRendered++;
+	if(framesRendered != 120){
+		window.requestAnimationFrame(renderLoop);
+	}
+	else{
+		framesRendered = 0;
+		animating = false;
+	}
+};
+
+var door1Out = true;
+function animateDoor1(frame){
+	const distance = 1;
+	const translateDistance = (distance + (frame%60)) / step;
+	//draw stuff
+	n = reintVertexBuffers(gl,"cube",u_isTextured);
+	gl.activeTexture(gl.TEXTURE4);
+	gl.uniform1i(u_Sampler, 4);
+	pushMatrix(modelMatrix);
+	modelMatrix.translate(-20,-1,-2);
+	modelMatrix.scale(0.1, 8, 4); // Scale
+	pushMatrix(modelMatrix);
+	if(door1Out){//left door
+		modelMatrix.translate(0,0,1+translateDistance);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+		modelMatrix.translate(0,0,0-translateDistance);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	}
+	else{
+		modelMatrix.translate(0,0,1+distance-translateDistance);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+		modelMatrix = popMatrix();
+		modelMatrix.translate(0,0,0-distance+translateDistance);
+		drawbox(gl, u_ModelMatrix, u_NormalMatrix, n);
+	}
+	modelMatrix = popMatrix();
+	if(frame == 59 || frame == 119){
+		door1Out = !door1Out;
+	}
 };
